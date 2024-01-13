@@ -1,5 +1,8 @@
 import logo from './logo.svg';
 import './App.css';
+import { useState } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+
 
 const DATA = [
   {
@@ -35,9 +38,46 @@ const DATA = [
 ];
 
 function App() {
+  const [stores, setStore] = useState(DATA);
   return (
-    <div className="App">
-     
+    <div className="layout__wrapper">
+      <div className='card'>
+        <DragDropContext onDragEnd={() => {
+          console.log('drag drop event occured')
+        }}>
+          <div className='header'>
+            <h1>Shopping list</h1>
+          </div>
+          <Droppable droppableId='ROOT' type='group' >
+            {(provided) => {
+              return (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {stores.map((store,index) => {
+                    return (
+                      <Draggable 
+                      draggableId={store.id} 
+                      key={store.id}
+                      index={index}
+                      >
+                        {(provided) => (
+                          
+                            <div className='store-container' {...provided.dragHandleProps}{...provided.draggableProps} ref={provided.innerRef}>
+                              <h3>{store.name}</h3>
+                            </div>
+                          
+                        )
+
+                        }
+                      </Draggable>
+                    )
+                  })}
+                </div>
+              )
+            }}
+          </Droppable>
+        </DragDropContext>
+      </div>
+
     </div>
   );
 }
