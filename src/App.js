@@ -37,14 +37,49 @@ const DATA = [
   },
 ];
 
+
 function App() {
   const [stores, setStore] = useState(DATA);
+
+  const handleDragEvent = (results) => {
+    const { source, destination, type } = results;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+    if (type === 'group') {
+      const reorderedStores = [...stores];
+      const sourceIndex = source.index;
+      const destinationIndex = destination.index;
+      const [removedStore] = reorderedStores.splice(sourceIndex, 1)
+      reorderedStores.splice(destinationIndex, 0, removedStore);
+      return setStore(reorderedStores);
+    }
+
+    const storeSourceIndex=stores.findIndex((store)=>store.id===source.droppableId);
+    const storeDestinationIndex=stores.findIndex((store)=>store.id===destination.droppableId)
+    const newSourceItems=[...stores[storeSourceIndex].items]
+    const newDestinationIems=
+    source.droppableId !== destination.droppableId 
+    ? [...stores[storeDestinationIndex].items] 
+    : newSourceItems
+
+    const [deletedItem]= newSourceItems.splice(source.index,1)
+    newDestinationIems.splice(destination.index,0,deletedItem)
+    const newStores=[...stores]
+   
+    newStores[storeSourceIndex]= {
+      ...stores[storeSourceIndex],items:newSourceItems
+    }
+    newStores[storeDestinationIndex]= {
+      ...stores[storeDestinationIndex],items:newDestinationIems
+    }
+    setStore(newStores)
+  }
+
+
   return (
     <div className="layout__wrapper">
       <div className='card'>
-        <DragDropContext onDragEnd={() => {
-          console.log('drag drop event occured')
-        }}>
+        <DragDropContext onDragEnd={handleDragEvent}>
           <div className='header'>
             <h1>Shopping list</h1>
           </div>
@@ -52,25 +87,26 @@ function App() {
             {(provided) => {
               return (
                 <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {stores.map((store,index) => {
+                  {stores.map((store, index) => {
                     return (
-                      <Draggable 
-                      draggableId={store.id} 
-                      key={store.id}
-                      index={index}
+                      <Draggable
+                        draggableId={store.id}
+                        key={store.id}
+                        index={index}
                       >
                         {(provided) => (
-                          
-                            <div className='store-container' {...provided.dragHandleProps}{...provided.draggableProps} ref={provided.innerRef}>
-                              <h3>{store.name}</h3>
-                            </div>
-                          
+
+                          <div {...provided.dragHandleProps}{...provided.draggableProps} ref={provided.innerRef}>
+                            <StoreList {...store} />
+                          </div>
+
                         )
 
                         }
                       </Draggable>
                     )
                   })}
+                  {provided.placeholder}
                 </div>
               )
             }}
@@ -80,6 +116,40 @@ function App() {
 
     </div>
   );
+}
+
+function StoreList({ name, items, id }) {
+  return (
+    <Droppable droppableId={id}>
+      {(provided) => {
+        return (
+          <div {...provided.droppableProps} ref={provided.innerRef}>
+            <div className='store-container'>
+              <h3>{name}</h3>
+            </div>
+            <div className='items-container'>
+              {items.map((item, index) => {
+                return (
+                  <Draggable draggableId={item.id} index={index} key={item.id}>
+                    {(provided) => {
+                      return (
+                        <div className='item-container' {...provided.dragHandleProps} {...provided.draggableProps} ref={provided.innerRef}>
+                          <h4>{item.name}</h4>
+                        </div>
+                      )
+                    }}
+                  </Draggable>
+                )
+              })}
+            </div>
+            {provided.placeholder}
+          </div>
+          
+        )
+      }}
+    </Droppable>
+
+  )
 }
 
 export default App;
